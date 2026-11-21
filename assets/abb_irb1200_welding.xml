@@ -1,0 +1,139 @@
+<mujoco model="abb_irb1200_welding_station">
+  <compiler angle="degree" coordinate="local"/>
+  <option timestep="0.005" gravity="0 0 -9.81" integrator="implicitfast"/>
+
+  <visual>
+    <global offwidth="640" offheight="480"/>
+    <headlight diffuse="0.7 0.7 0.7" ambient="0.35 0.35 0.35" specular="0.2 0.2 0.2"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+  </visual>
+
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.88 0.90 0.92" rgb2="0.80 0.83 0.86" width="512" height="512"/>
+    <material name="floor_mat" texture="grid" texrepeat="8 8" reflectance="0.15"/>
+    <material name="abb_white" rgba="0.92 0.93 0.95 1"/>
+    <material name="abb_dark" rgba="0.20 0.22 0.25 1"/>
+    <material name="abb_orange" rgba="0.90 0.32 0.12 1"/>
+    <material name="welder_blue" rgba="0.14 0.34 0.62 1"/>
+    <material name="conveyor_green" rgba="0.18 0.56 0.30 1"/>
+    <material name="metal_gray" rgba="0.55 0.58 0.62 1"/>
+    <material name="pallet_wood" rgba="0.62 0.42 0.22 1"/>
+    <material name="workpiece_blue" rgba="0.18 0.22 0.78 1"/>
+    <material name="target_gold" rgba="0.98 0.76 0.10 0.85"/>
+  </asset>
+
+  <default>
+    <joint damping="2.0" armature="0.05" limited="true"/>
+    <geom contype="1" conaffinity="1" condim="3" friction="0.8 0.01 0.001"/>
+    <position kp="400" kv="40"/>
+  </default>
+
+  <worldbody>
+    <!-- Lighting & Camera -->
+    <light pos="1.5 -1.8 2.6" dir="-0.4 0.5 -0.8" diffuse="0.85 0.85 0.85"/>
+    <light pos="-1.2 1.5 2.2" dir="0.4 -0.4 -0.8" diffuse="0.45 0.45 0.5"/>
+    <camera name="station_cam" pos="1.45 -1.55 1.35" xyaxes="0.72 0.69 0 -0.28 0.30 0.91"/>
+
+    <!-- Factory Floor -->
+    <geom name="floor" type="plane" pos="0 0 0" size="3 3 0.1" material="floor_mat" contype="1" conaffinity="1"/>
+
+    <!-- ================================================================== -->
+    <!-- WELDING STATION OBSTACLES (Matching Thesis Figure 5.2 Layout)      -->
+    <!-- ================================================================== -->
+
+    <!-- Robot Pedestal (non-colliding with base link) -->
+    <geom name="pedestal" type="box" pos="0 0 0.18" size="0.14 0.14 0.18" material="abb_dark" contype="0" conaffinity="0"/>
+
+    <!-- Welding Machine (Left side of robot, blue industrial unit) -->
+    <body name="welding_machine" pos="-0.72 0.15 0.55">
+      <geom name="obs_welder_body" type="box" size="0.22 0.28 0.55" material="welder_blue"/>
+      <geom name="obs_welder_arm" type="box" pos="0.26 0 0.15" size="0.10 0.08 0.08" material="metal_gray"/>
+    </body>
+
+    <!-- Conveyor Belt & Support Frame (Right/front side of robot) -->
+    <body name="conveyor_station" pos="0.58 0.0 0.34">
+      <geom name="obs_conveyor_bed" type="box" size="0.34 0.18 0.04" material="conveyor_green"/>
+      <geom name="obs_conveyor_leg1" type="box" pos="-0.28 0 -0.17" size="0.03 0.16 0.17" material="metal_gray"/>
+      <geom name="obs_conveyor_leg2" type="box" pos="0.28 0 -0.17" size="0.03 0.16 0.17" material="metal_gray"/>
+      <!-- Obstacle Workpiece Box on Conveyor (forces collision-free trajectory) -->
+      <geom name="obs_workpiece_box" type="box" pos="-0.08 0.0 0.16" size="0.09 0.09 0.12" material="workpiece_blue"/>
+    </body>
+
+    <!-- Pallet / Fixture on Front-Left -->
+    <body name="pallet_fixture" pos="-0.32 -0.45 0.16">
+      <geom name="obs_pallet" type="box" size="0.18 0.18 0.16" material="pallet_wood"/>
+    </body>
+
+    <!-- Target Welding Pose Visual Marker (No collision) -->
+    <body name="target_marker" mocap="true" pos="0.55 0.18 0.56">
+      <geom name="target_sphere" type="sphere" size="0.022" material="target_gold" contype="0" conaffinity="0"/>
+      <site name="target_site" pos="0 0 0" size="0.015" rgba="1 0.8 0 0.9"/>
+    </body>
+
+    <!-- ================================================================== -->
+    <!-- ABB IRB 1200-5/0.9 6-DoF MANIPULATOR (Exact Table 5.2 & 5.3 DH)    -->
+    <!-- ================================================================== -->
+    <body name="robot_base" pos="0 0 0.36">
+      <geom name="base_housing" type="cylinder" pos="0 0 0.08" size="0.105 0.08" material="abb_dark" contype="0" conaffinity="0"/>
+
+      <!-- Joint 1: theta1, d1=0.399, a1=0, alpha1=-90 -->
+      <body name="j1_body" pos="0 0 0">
+        <joint name="joint1" type="hinge" axis="0 0 1" range="-170 170"/>
+        <geom name="link1_geom" type="capsule" fromto="0 0 0.14 0 0 0.399" size="0.075" material="abb_white" contype="0" conaffinity="0"/>
+
+        <body name="link1_frame" pos="0 0 0.399" euler="-90 0 0">
+          <!-- Joint 2: theta2 - 90, d2=0, a2=0.448, alpha2=0 -->
+          <body name="j2_body" pos="0 0 0" euler="0 0 -90">
+            <joint name="joint2" type="hinge" axis="0 0 1" range="-100 130"/>
+            <geom name="link2_shoulder" type="cylinder" pos="0 0 0" size="0.075 0.065" material="abb_dark"/>
+            <geom name="link2_geom" type="capsule" fromto="0 0 0 0.448 0 0" size="0.055" material="abb_white"/>
+
+            <body name="link2_frame" pos="0.448 0 0">
+              <!-- Joint 3: theta3, d3=0, a3=0.042, alpha3=-90 -->
+              <body name="j3_body" pos="0 0 0">
+                <joint name="joint3" type="hinge" axis="0 0 1" range="-200 70"/>
+                <geom name="link3_elbow" type="sphere" pos="0 0 0" size="0.06" material="abb_dark"/>
+                <geom name="link3_geom" type="capsule" fromto="0 0 0 0.042 0 0" size="0.048" material="abb_white"/>
+
+                <body name="link3_frame" pos="0.042 0 0" euler="-90 0 0">
+                  <!-- Joint 4: theta4, d4=0.451, a4=0, alpha4=+90 -->
+                  <body name="j4_body" pos="0 0 0">
+                    <joint name="joint4" type="hinge" axis="0 0 1" range="-270 270"/>
+                    <geom name="link4_geom" type="capsule" fromto="0 0 0.05 0 0 0.451" size="0.042" material="abb_white"/>
+
+                    <body name="link4_frame" pos="0 0 0.451" euler="90 0 0">
+                      <!-- Joint 5: theta5, d5=0, a5=0, alpha5=-90 -->
+                      <body name="j5_body" pos="0 0 0">
+                        <joint name="joint5" type="hinge" axis="0 0 1" range="-130 130"/>
+                        <geom name="link5_wrist" type="sphere" pos="0 0 0" size="0.042" material="abb_dark"/>
+
+                        <body name="link5_frame" pos="0 0 0" euler="-90 0 0">
+                          <!-- Joint 6: theta6 - 180, d6=0.082, a6=0, alpha6=0 -->
+                          <body name="j6_body" pos="0 0 0" euler="0 0 -180">
+                            <joint name="joint6" type="hinge" axis="0 0 1" range="-400 400"/>
+                            <geom name="link6_flange" type="cylinder" pos="0 0 0.035" size="0.032 0.035" material="abb_orange"/>
+                            <geom name="welding_torch" type="capsule" fromto="0 0 0.06 0 0 0.082" size="0.012" material="metal_gray"/>
+                            <site name="eef_site" pos="0 0 0.082" size="0.014" rgba="0.95 0.25 0.1 1"/>
+                          </body>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position name="act_j1" joint="joint1" ctrlrange="-2.9671 2.9671"/>
+    <position name="act_j2" joint="joint2" ctrlrange="-1.7453 2.2689"/>
+    <position name="act_j3" joint="joint3" ctrlrange="-3.4907 1.2217"/>
+    <position name="act_j4" joint="joint4" ctrlrange="-4.7124 4.7124"/>
+    <position name="act_j5" joint="joint5" ctrlrange="-2.2689 2.2689"/>
+    <position name="act_j6" joint="joint6" ctrlrange="-6.9813 6.9813"/>
+  </actuator>
+</mujoco>

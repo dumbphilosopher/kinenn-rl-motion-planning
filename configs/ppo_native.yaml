@@ -1,0 +1,23 @@
+# Native PPO Hyperparameters (Thesis Table 6.2)
+algo: ppo
+mode: native
+total_timesteps: 25000
+seed: 42
+env:
+  action_dt: 0.05
+  max_steps: 240
+  success_tolerance: 0.025
+  reward_alpha: 10000.0
+  randomize_target_orientation: true
+hyperparams:
+  learning_rate: 0.0003
+  n_steps: 256
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  max_grad_norm: 0.5
+  normalize_advantage: true
+  ent_coef: 0.0
+  vf_coef: 0.5

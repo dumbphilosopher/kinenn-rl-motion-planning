@@ -1,0 +1,29 @@
+# KineNN-Informed PPO Hyperparameters (Thesis Table 6.5 & Algorithm 5)
+algo: ppo
+mode: kinenn
+total_timesteps: 25000
+seed: 42
+env:
+  action_dt: 0.05
+  max_steps: 240
+  success_tolerance: 0.025
+  reward_alpha: 10000.0
+  randomize_target_orientation: true
+kinenn:
+  filter_steps: 35
+  dh_update_freq: 32
+  perturbation_std: 0.015
+  ik_damping: 0.08
+  ik_gain: 0.85
+hyperparams:
+  learning_rate: 0.0001
+  n_steps: 640
+  batch_size: 160
+  n_epochs: 15
+  gamma: 0.95
+  gae_lambda: 0.90
+  clip_range: 0.1
+  max_grad_norm: 0.8
+  normalize_advantage: true
+  ent_coef: 0.01
+  vf_coef: 0.5
